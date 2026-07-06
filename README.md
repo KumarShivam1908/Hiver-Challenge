@@ -6,7 +6,20 @@ An intelligent, production-ready system that generates contextual email replies 
 
 ---
 
-## 🏗️ Architecture & Approach
+## 🏗️ Architecture & Approach (HLD)
+
+```mermaid
+graph TD;
+    A[Incoming Email] --> B[ChromaDB Vector Store]
+    B -->|Retrieves Top K Similar Emails| C[Dynamic Prompt Builder]
+    A --> C
+    C -->|Few-Shot Prompt| D[Groq LLM Llama 3.3 70B]
+    D -->|Generates| E[Suggested Reply]
+    
+    E --> F[Evaluation Framework]
+    A --> F
+    F -->|LLM Judge & ROUGE/SBERT| G[Quality Scores & Reasoning]
+```
 
 This system consists of three main components:
 
@@ -23,14 +36,14 @@ When a new email arrives, we query ChromaDB for the top 3 similar emails, constr
 * **Why Llama 3.3 70B?** 70B parameters provide excellent instruction following and tone replication without the immense cost of proprietary models like GPT-4.
 
 ### 3. Accuracy Measurement (The Core Challenge)
-**The Problem:** Traditional Natural Language Processing accuracy metrics (like Exact Match, BLEU, or even ROUGE) are fundamentally flawed for generative conversational tasks. If a user asks "Can we meet at 4?", both "Sure, 4pm works" and "Yes, see you at 16:00" are 100% accurate, yet an exact match score would be 0%.
+**The Problem with Standard Metrics:** Traditional Natural Language Processing accuracy metrics (like Exact Match, BLEU, or even ROUGE) are fundamentally flawed for generative conversational tasks. They measure *lexical overlap* (exact words used). If a user asks "Can we meet at 4?", both "Sure, 4pm works" and "Yes, see you at 16:00" are 100% accurate, yet an exact match score would be 0%.
 
-**The Solution:** We implemented an **LLM-as-a-Judge** framework. We pass the generated reply and the original email to a heavily prompted evaluator LLM that returns strict JSON across three dimensions:
-1. **Relevance (1-10):** Does the reply actually answer the email?
+**Why we use LLM-as-a-Judge (The Solution):** We implemented a hybrid metric approach heavily relying on an **LLM-as-a-Judge** framework. We pass the generated reply and the original email to a heavily prompted evaluator LLM that returns strict JSON across three dimensions:
+1. **Relevance (1-10):** Does the reply actually answer the email? (Semantic Answer Relevance)
 2. **Fluency (1-10):** Is it grammatically correct and natural?
 3. **Tone (1-10):** Does it match a corporate setting?
 
-*Trade-off:* While an LLM judge is slightly slower and more expensive than calculating a BLEU score locally, it actually reflects human-perceived quality and, crucially, provides **reasoning** (the "why") for its score.
+*Trade-off:* While an LLM judge is slightly slower and more expensive than calculating a BLEU score locally, it actually reflects human-perceived quality. Crucially, it provides **deterministic reasoning** (the "why") for its score, allowing engineers to debug prompt failures. As a fallback/sanity check, the codebase also supports deterministic metrics like Semantic Similarity (SBERT) and ROUGE-L.
 
 ---
 
@@ -57,6 +70,20 @@ Launch the Streamlit interface to interact with the Generator and Evaluator.
 ```bash
 streamlit run app.py
 ```
+
+---
+
+## 🧪 Example to Try
+
+Once you have the app running (or on the Live Demo), try pasting this email into the generator to see how the RAG and Evaluator work together:
+
+**Incoming Email:**
+> Hi team,  
+> I have a strict conflict tomorrow at 3 PM. Can we please reschedule our sync to either tomorrow morning at 10 AM, or push it to Thursday?  
+> Thanks,  
+> John
+
+Hit **Generate Reply**, and once it finishes, hit **Run Evaluation** to see the exact reasoning the LLM Judge provides for grading the semantic relevance of the generated response!
 
 ---
 
