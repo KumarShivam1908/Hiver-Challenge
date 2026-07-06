@@ -72,12 +72,21 @@ def main():
                     if "error" in e:
                         st.error(e["error"])
                     else:
-                        st.metric("Composite LLM Score", f"{e.get('composite_score', 0)} / 10")
+                        def get_status(score):
+                            try:
+                                s = float(score)
+                                if s >= 8: return f"{s} (🟢 Good)"
+                                if s >= 5: return f"{s} (🟡 Needs Review)"
+                                return f"{s} (🔴 Poor)"
+                            except:
+                                return str(score)
+
+                        st.metric("Composite LLM Score", f"{get_status(e.get('composite_score', 0))} / 10")
                         
                         ec1, ec2, ec3 = st.columns(3)
-                        ec1.metric("Relevance (LLM)", f"{e.get('relevance', {}).get('score', 0)}")
-                        ec2.metric("Fluency (LLM)", f"{e.get('fluency', {}).get('score', 0)}")
-                        ec3.metric("Tone (LLM)", f"{e.get('tone', {}).get('score', 0)}")
+                        ec1.metric("Relevance (LLM)", get_status(e.get('relevance', {}).get('score', 0)))
+                        ec2.metric("Fluency (LLM)", get_status(e.get('fluency', {}).get('score', 0)))
+                        ec3.metric("Tone (LLM)", get_status(e.get('tone', {}).get('score', 0)))
                         
                         ec4, ec5 = st.columns(2)
                         ec4.metric("Semantic Similarity (SBERT)", str(e.get("semantic_similarity", "N/A")))
