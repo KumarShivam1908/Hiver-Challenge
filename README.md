@@ -27,7 +27,8 @@ This system consists of three main components:
 We use a **Retrieval-Augmented Generation (RAG)** approach using **ChromaDB** and `sentence-transformers`.
 * **Chunking Strategy:** Unlike long documents where recursive character chunking is needed, the atomic unit of context here is a *single email interaction*. We apply **Email-Level Chunking**, indexing the entire incoming email text as a single document, while storing the corresponding human reply and metadata (like Date/Subject) in the vector DB metadata payload. This guarantees perfect context boundaries without splitting sentences.
 * **Why RAG instead of Fine-Tuning?** 
-  Fine-tuning an LLM requires significant compute, locks you into a specific dataset, and is prone to catastrophic forgetting. By embedding the incoming emails from the Enron dataset, we can instantly retrieve $K$ similar historical situations and their corresponding replies to provide few-shot examples to a base model. This approach is highly modular (you can swap out the VectorDB for a customer service dataset instantly) and much cheaper to run.
+  I initially explored fine-tuning a local model using **Unsloth** to teach it the Enron corporate tone. However, the compute requirements were prohibitive (training was estimated at 3+ hours on available hardware). 
+  More importantly, fine-tuning locks you into a specific dataset and is prone to catastrophic forgetting. By using **RAG** (embedding the incoming emails), we can instantly retrieve $K$ similar historical situations and their corresponding replies to provide few-shot examples to a base model. This approach is highly modular—you can swap out the VectorDB for a completely different customer service dataset instantly without retraining—and achieves the exact same tone-matching at a fraction of the cost.
 
 ### 2. Generative Response (Groq LLM)
 When a new email arrives, we query ChromaDB for the top 3 similar emails, construct a prompt containing those examples, and send it to **Groq** (`llama-3.3-70b-versatile`). 
@@ -90,7 +91,8 @@ Hit **Generate Reply**, and once it finishes, hit **Run Evaluation** to see the 
 
 ---
 
-## 🧠 Trade-offs & Future Improvements
-1. **Local vs Cloud DB:** We used a local ChromaDB instance to make this repository self-contained and easy to review for the hiring challenge. In production, this would be swapped for Pinecone, Weaviate, or a managed Chroma cloud instance.
-2. **Evaluation Bottlenecks:** Currently, evaluation happens synchronously on a per-response basis. For a production evaluation pipeline (evaluating 10,000 generated emails offline), we would implement async batching for the Groq API calls to maximize throughput.
-3. **Embedding Model:** We used `all-MiniLM-L6-v2`. It's incredibly fast on CPU, but larger models (like OpenAI's `text-embedding-3-large`) would yield higher quality semantic retrieval.
+## 🧠 Trade-offs & "If Given More Time, What's Next?"
+1. **Local vs Cloud DB:** We used a local ChromaDB instance to make this repository self-contained and easy to review. *Why not Pinecone?* Because setting up cloud DB credentials creates friction for reviewers. **Next step:** Swap to a managed cloud DB (like Pinecone or Weaviate) for scalable, distributed vector search.
+2. **Evaluation Bottlenecks:** Currently, evaluation happens synchronously on a per-response basis. *Why?* For a real-time UI demonstration, synchronous calls are required. **Next step:** For a production evaluation pipeline (e.g., scoring 10,000 generated emails offline), implement async batching for the Groq API to maximize throughput.
+3. **Embedding Model:** We used `all-MiniLM-L6-v2`. *Why not a heavier model?* It is incredibly fast and runs instantly on CPU without requiring a GPU. **Next step:** Upgrade to larger models (like OpenAI's `text-embedding-3-large` or `BGE-large`) which yield significantly higher quality semantic retrieval at the cost of API latency.
+4. **Data Preprocessing Pipeline:** *Why naive chunking?* Email-level chunking works perfectly for this dataset structure. **Next step:** Build a multi-vector retriever that chunks heavily threaded emails by individual sender/recipient blocks to handle complex "Reply-All" email chains.
