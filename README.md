@@ -83,7 +83,10 @@ Once you have the app running (or on the Live Demo), try pasting this email into
 > Thanks,  
 > John
 
-Hit **Generate Reply**, and once it finishes, hit **Run Evaluation** to see the exact reasoning the LLM Judge provides for grading the semantic relevance of the generated response!
+**Expected Ground-Truth Reply (Optional):**
+> No problem John, let's push it to Thursday.
+
+Hit **Generate Reply**, and once it finishes, hit **Run Evaluation** to see the exact reasoning the LLM Judge provides for grading the semantic relevance of the generated response! *(Notice that because you provided a Ground-Truth reply, the system will also calculate **SBERT Semantic Similarity** and **ROUGE-L**. If you left it blank, those metrics would display N/A).*
 
 ---
 

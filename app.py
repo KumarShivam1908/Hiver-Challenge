@@ -83,6 +83,9 @@ def main():
                         ec4.metric("Semantic Similarity (SBERT)", str(e.get("semantic_similarity", "N/A")))
                         ec5.metric("ROUGE-L", str(e.get("rouge_l", "N/A")))
                         
+                        if str(e.get("semantic_similarity", "N/A")) == "N/A":
+                            st.caption("ℹ️ *Note: You must provide an Expected Ground-Truth Reply to unlock SBERT & ROUGE scores.*")
+                        
                         with st.expander("View LLM Grading Reasoning", expanded=True):
                             st.markdown(f"**Relevance:** {e.get('relevance', {}).get('reason', '')}")
                             st.markdown(f"**Fluency:** {e.get('fluency', {}).get('reason', '')}")
