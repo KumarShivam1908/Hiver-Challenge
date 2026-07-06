@@ -72,25 +72,34 @@ def main():
                     if "error" in e:
                         st.error(e["error"])
                     else:
-                        def get_status(score):
+                        def get_status_text(score):
                             try:
                                 s = float(score)
-                                if s >= 8: return f"{s} (🟢 Good)"
-                                if s >= 5: return f"{s} (🟡 Needs Review)"
-                                return f"{s} (🔴 Poor)"
+                                if s >= 8: return "🟢 Good"
+                                if s >= 5: return "🟡 Needs Review"
+                                return "🔴 Poor"
                             except:
-                                return str(score)
+                                return None
 
-                        st.metric("Composite LLM Score", f"{get_status(e.get('composite_score', 0))} / 10")
+                        st.metric("Composite LLM Score", f"{e.get('composite_score', 0)} / 10", 
+                                  delta=get_status_text(e.get('composite_score', 0)), delta_color="off")
                         
                         ec1, ec2, ec3 = st.columns(3)
-                        ec1.metric("Relevance (LLM)", get_status(e.get('relevance', {}).get('score', 0)))
-                        ec2.metric("Fluency (LLM)", get_status(e.get('fluency', {}).get('score', 0)))
-                        ec3.metric("Tone (LLM)", get_status(e.get('tone', {}).get('score', 0)))
+                        ec1.metric("Relevance (LLM)", e.get('relevance', {}).get('score', 0), 
+                                   delta=get_status_text(e.get('relevance', {}).get('score', 0)), delta_color="off")
+                        ec2.metric("Fluency (LLM)", e.get('fluency', {}).get('score', 0),
+                                   delta=get_status_text(e.get('fluency', {}).get('score', 0)), delta_color="off")
+                        ec3.metric("Tone (LLM)", e.get('tone', {}).get('score', 0),
+                                   delta=get_status_text(e.get('tone', {}).get('score', 0)), delta_color="off")
                         
                         ec4, ec5 = st.columns(2)
-                        ec4.metric("Semantic Similarity (SBERT)", str(e.get("semantic_similarity", "N/A")))
-                        ec5.metric("ROUGE-L", str(e.get("rouge_l", "N/A")))
+                        sbert_val = e.get("semantic_similarity", "N/A")
+                        rouge_val = e.get("rouge_l", "N/A")
+                        
+                        ec4.metric("Semantic Similarity (SBERT)", str(sbert_val), 
+                                   delta=get_status_text(sbert_val) if sbert_val != "N/A" else None, delta_color="off")
+                        ec5.metric("ROUGE-L", str(rouge_val), 
+                                   delta=get_status_text(rouge_val) if rouge_val != "N/A" else None, delta_color="off")
                         
                         if str(e.get("semantic_similarity", "N/A")) == "N/A":
                             st.caption("ℹ️ *Note: You must provide an Expected Ground-Truth Reply to unlock SBERT & ROUGE scores.*")
