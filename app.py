@@ -103,6 +103,19 @@ def main():
                         
                         if str(e.get("semantic_similarity", "N/A")) == "N/A":
                             st.caption("ℹ️ *Note: You must provide an Expected Ground-Truth Reply to unlock SBERT & ROUGE scores.*")
+                            
+                        with st.expander("📊 How to interpret these scores?", expanded=False):
+                            st.markdown("""
+                            **LLM Judge (Relevance, Fluency, Tone):**
+                            - **8.0 - 10.0 (🟢 Good):** Production-ready. Matches human quality.
+                            - **5.0 - 7.9 (🟡 Needs Review):** Acceptable, but may need minor manual edits.
+                            - **< 5.0 (🔴 Poor):** Hallucination or off-topic. Do not send.
+                            
+                            **Deterministic Metrics (SBERT & ROUGE-L):**
+                            *Note: These require a Ground-Truth reply. Both are scaled out of 10.*
+                            - **Semantic Similarity (SBERT):** Measures meaning. **> 7.5** is excellent.
+                            - **ROUGE-L:** Measures exact word overlap. **> 4.0** is good for conversational tasks (humans rarely use the exact same words).
+                            """)
                         
                         with st.expander("View LLM Grading Reasoning", expanded=True):
                             st.markdown(f"**Relevance:** {e.get('relevance', {}).get('reason', '')}")
