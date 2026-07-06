@@ -33,6 +33,8 @@ def main():
         
         with col1:
             incoming = st.text_area("Incoming Email", height=200)
+            reference = st.text_area("Expected Ground-Truth Reply (Optional)", height=100, 
+                                     help="Required to calculate SBERT & ROUGE-L. The LLM Judge works without it!")
             
             if st.button("Generate Reply", type="primary"):
                 if incoming.strip():
@@ -41,6 +43,7 @@ def main():
                         reply, examples = gen.generate_reply(incoming)
                         
                         st.session_state['incoming'] = incoming
+                        st.session_state['reference'] = reference if reference.strip() else None
                         st.session_state['reply'] = reply
                         st.session_state['examples'] = examples
                         st.session_state['eval'] = None
@@ -57,7 +60,11 @@ def main():
                 if st.button("Run Evaluation"):
                     with st.spinner("Grading..."):
                         evaluator = get_evaluator()
-                        res = evaluator.evaluate(st.session_state['incoming'], st.session_state['reply'])
+                        res = evaluator.evaluate(
+                            incoming_email=st.session_state['incoming'], 
+                            generated_reply=st.session_state['reply'],
+                            reference_reply=st.session_state.get('reference')
+                        )
                         st.session_state['eval'] = res
                 
                 if st.session_state.get('eval'):
